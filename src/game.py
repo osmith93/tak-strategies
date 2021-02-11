@@ -43,6 +43,8 @@ class Field:
 
     @property
     def controlled_by(self):
+        if self.empty:
+            return ''
         return self.top.color
 
     def add_stone(self, piece: Piece):
@@ -219,10 +221,10 @@ class Game:
         vertical_goal: List = [(x, self._size - 1) for x in range(self._size)]
         return any([self.are_regions_connected(color, horizontal_queue, horizontal_goal),
                     self.are_regions_connected(color, vertical_queue, vertical_goal)])
-        
+
     def are_regions_connected(self, color: str, start: List, goal: List):
-        queue = start
-        visited: List = start
+        queue: List = start
+        visited: List = start.copy()
         while len(queue) > 0:
             current_field = queue.pop()
             for direction in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
@@ -243,4 +245,5 @@ class Game:
         pass
 
     def evaluate_game(self):
+        print("Game is over")
         pass
