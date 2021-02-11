@@ -1,5 +1,4 @@
-from typing import List
-from numbers import Integral
+from typing import List, Optional
 
 WHITE = 'white'
 BLACK = 'black'
@@ -184,6 +183,7 @@ class Game:
         self._size: int = size
         self._board: Board = Board(size)
         self._pieces_left = {player1: Game.RULES[size], player2: Game.RULES[size]}
+        self.winner: Optional[Player] = None
 
     def next_action(self):
         print(f"Player '{self.current_player.name}', please choose your next action.")
@@ -202,7 +202,44 @@ class Game:
     def switch_players(self):
         self.current_player = self.players[1] if self.current_player == self.players[0] else self.players[0]
 
+    def no_pieces_left(self):
+        for player in self.players:
+            stone_count = self._pieces_left[player]['flatstones'] + self._pieces_left[player]['capstones']
+            if stone_count == 0:
+                return True
+        return False
+
+    def board_full(self):
+        return self._board.full
+
+    def road_exists(self, color: str):
+        horizontal_queue: List = [(0, y) for y in range(self._size) if self._board.field(0, y).controlled_by == color]
+        vertical_queue: List = [(x, 0) for x in range(self._size) if self._board.field(x, 0).controlled_by == color]
+        horizontal_goal: List = [(self._size - 1, y) for y in range(self._size)]
+        vertical_goal: List = [(x, self._size - 1) for x in range(self._size)]
+        return any([self.are_regions_connected(color, horizontal_queue, horizontal_goal),
+                    self.are_regions_connected(color, vertical_queue, vertical_goal)])
+        
+    def are_regions_connected(self, color: str, start: List, goal: List):
+        queue = start
+        visited: List = start
+        while len(queue) > 0:
+            current_field = queue.pop()
+            for direction in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                x = current_field[0] + direction[0]
+                y = current_field[1] + direction[1]
+                if x not in range(self._size) or y not in range(self._size):
+                    continue
+                if self._board.field(x, y).controlled_by == color and self._board.field(x, y) not in visited:
+                    queue.append((x, y))
+                    visited.append((x, y))
+                    if (x, y) in goal:
+                        return True
+
     def is_game_over(self) -> bool:
+        return any([self.no_pieces_left(), self.board_full(), self.road_exists(WHITE), self.road_exists(BLACK)])
+
+    def count_top_flatstones(self):
         pass
 
     def evaluate_game(self):
